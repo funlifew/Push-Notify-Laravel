@@ -6,6 +6,9 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
+use Intervention\Image\ImageManagerStatic as Image;
+use Intervention\Image\Geometry\Circle;
+
 
 class InstallPush extends Command
 {
@@ -31,6 +34,25 @@ class InstallPush extends Command
     public function handle()
     {
         $this->info('Installing Push Notify package...');
+
+        // Ask if user wants to install recommended packages
+        if ($this->confirm('Would you like to install recommended packages (intervention/image) and (guzzlehttp/guzzle)?', true)) {
+            $this->comment('Installing additional packages via Composer...');
+            
+            $command = ['composer', 'require', 'intervention/image', "guzzlehttp/guzzle"];
+            $process = new Process($command);
+            $process->setTimeout(null); // No timeout
+            
+            try {
+                $process->mustRun(function ($type, $buffer) {
+                    $this->output->write($buffer);
+                });
+                $this->info('✓ Additional packages installed successfully');
+            } catch (ProcessFailedException $exception) {
+                $this->error('Failed to install additional packages.');
+                $this->line($exception->getMessage());
+            }
+        }
 
         // Publish assets
         $this->comment('Publishing assets...');
@@ -67,16 +89,34 @@ class InstallPush extends Command
         $defaultIcon = public_path('default-icon.png');
         if (!File::exists($defaultIcon)) {
             $this->comment('Creating default icon...');
-            // Create a simple default icon if Intervention Image is available
+
             if (class_exists('Intervention\Image\Laravel\Facades\Image')) {
-                $img = \Intervention\Image\Laravel\Facades\Image::canvas(64, 64, '#ff5000');
-                $img->circle(50, 32, 32, function ($draw) {
-                    $draw->background('#ffffff');
-                });
-                $img->save($defaultIcon);
-                $this->info('✓ Default icon created');
+                try {
+                    // Try Intervention Image v3 approach
+                    $img = \Intervention\Image\Laravel\Facades\Image::create(64, 64, '#ff5000');
+
+                    // Create a white circle at the center
+                    $circle = new Circle(50); // diameter
+                    $circle->background('#ffffff')->position('center');
+                    $img->draw($circle);
+
+                    $img->save($defaultIcon);
+                    $this->info('✓ Default icon created (v3)');
+                } catch (\Throwable $e) {
+                    // Fallback for Intervention Image v2
+                    try {
+                        $img = \Intervention\Image\Facades\Image::canvas(64, 64, '#ff5000');
+                        $img->circle(50, 32, 32, function ($draw) {
+                            $draw->background('#ffffff');
+                        });
+                        $img->save($defaultIcon);
+                        $this->info('✓ Default icon created (v2)');
+                    } catch (\Throwable $e2) {
+                        $this->warn('⚠️ Error creating default icon: ' . $e2->getMessage());
+                    }
+                }
             } else {
-                $this->warn('Intervention Image not available - default icon not created');
+                $this->warn('⚠️ Intervention Image not available - default icon not created');
             }
         }
 
