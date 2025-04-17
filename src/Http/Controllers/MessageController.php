@@ -19,7 +19,7 @@ class MessageController extends Controller
     {
         $messages = Message::paginate(15);
         
-        return view('notify::messages.index', compact('messages'));
+        return view('push-notify::messages.index', compact('messages'));
     }
 
     /**
@@ -29,7 +29,8 @@ class MessageController extends Controller
      */
     public function create()
     {
-        return view('notify::messages.create');
+        // Share empty errors bag with the view to avoid "undefined variable" errors
+        return view('push-notify::messages.create')->withErrors([]);
     }
 
     /**
@@ -76,7 +77,7 @@ class MessageController extends Controller
     {
         $message = Message::findOrFail($id);
         
-        return view('notify::messages.edit', compact('message'));
+        return view('push-notify::messages.edit', compact('message'));
     }
 
     /**

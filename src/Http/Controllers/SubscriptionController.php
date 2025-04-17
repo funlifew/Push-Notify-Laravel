@@ -51,13 +51,54 @@ class SubscriptionController extends Controller
             ->paginate(10, ['*'], 'scheduled_page')
             ->withQueryString();
 
-        return view('notify::dashboard', compact(
+        $notificationStats = $this->calculateNotificationStats();
+
+        $deviceStats = Subscription::groupBy('os')
+        ->selectRaw('os, COUNT(*) as count')
+        ->pluck('count', 'os')
+        ->toArray();
+
+
+        return view('push-notify::notify.dashboard', compact(
             'subscriptions', 
             'messages', 
             'notifications', 
             'topics',
-            'scheduledNotifications'
+            'scheduledNotifications',
+            'notificationStats',
+            'deviceStats',
         ));
+    }
+
+    protected function calculateNotificationStats()
+    {
+        $startDate = now()->subDays(30);
+        $dates = collect();
+        $sentData = collect();
+        $failedData = collect();
+
+        // Generate last 30 days dates
+        for ($i = 0; $i < 30; $i++) {
+            $date = $startDate->copy()->addDays($i);
+            $dates->push($date);
+            
+            $sent = Notification::where('status', true)
+                ->whereDate('created_at', $date->format('Y-m-d'))
+                ->count();
+            
+            $failed = Notification::where('status', false)
+                ->whereDate('created_at', $date->format('Y-m-d'))
+                ->count();
+            
+            $sentData->push($sent);
+            $failedData->push($failed);
+        }
+
+        return [
+            'dates' => $dates->toArray(),
+            'sent' => $sentData->toArray(),
+            'failed' => $failedData->toArray(),
+        ];
     }
 
     /**
@@ -122,7 +163,7 @@ class SubscriptionController extends Controller
         $messages = Message::all();
         $topics = Topic::all();
         
-        return view('notify::subscriptions.send', compact('subscription', 'messages', 'topics'));
+        return view('push-notify::subscriptions.send', compact('subscription', 'messages', 'topics'));
     }
 
     /**
@@ -212,7 +253,7 @@ class SubscriptionController extends Controller
         $messages = Message::all();
         $topics = Topic::all();
         
-        return view('notify::subscriptions.send-all', compact('messages', 'topics'));
+        return view('push-notify::subscriptions.send-all', compact('messages', 'topics'));
     }
 
     /**
@@ -287,6 +328,14 @@ class SubscriptionController extends Controller
         return redirect()->route('notify.dashboard')
             ->with('error', 'Failed to send notification to subscribers.');
     }
+    public function index()
+    {
+        $subscriptions = Subscription::with(['user', 'topics'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+        
+        return view('push-notify::subscriptions.index', compact('subscriptions'));
+    }
 
     /**
      * Delete a subscription.
@@ -316,7 +365,7 @@ class SubscriptionController extends Controller
         }
         
         $disk = config('push-notify.storage.disk', 'public');
-        $path = config('push-notify.storage.icons_path', 'icons');
+        $path = $icon->store('public/push-notify/icons');
         $quality = config('push-notify.storage.image_quality', 75);
         $width = config('push-notify.storage.icon_width', 64);
         $height = config('push-notify.storage.icon_height', 64);
@@ -336,7 +385,7 @@ class SubscriptionController extends Controller
         // Fallback to simple storage
         $filename = $icon->store($path, $disk);
         
-        return $filename;
+        return str_replace('public/', 'storage/', $path);
     }
 
     /**

@@ -40,10 +40,20 @@ class ScheduledNotificationController extends Controller
      */
     public function index()
     {
-        $scheduledNotifications = ScheduledNotification::orderBy('scheduled_at')
-            ->paginate(15);
+        // Get notifications by status
+        $pending = \Funlifew\PushNotify\Models\ScheduledNotification::where('status', 'pending')
+            ->orderBy('scheduled_at')
+            ->get();
             
-        return view('notify::scheduled.index', compact('scheduledNotifications'));
+        $sent = \Funlifew\PushNotify\Models\ScheduledNotification::where('status', 'sent')
+            ->orderBy('sent_at', 'desc')
+            ->get();
+            
+        $failed = \Funlifew\PushNotify\Models\ScheduledNotification::where('status', 'failed')
+            ->orderBy('scheduled_at', 'desc')
+            ->get();
+            
+        return view('push-notify::scheduled.index', compact('pending', 'sent', 'failed'))->withErrors([]);
     }
 
     /**
@@ -57,7 +67,7 @@ class ScheduledNotificationController extends Controller
         $topics = Topic::all();
         $subscriptions = Subscription::all();
         
-        return view('notify::scheduled.create', compact('messages', 'topics', 'subscriptions'));
+        return view('push-notify::scheduled.create', compact('messages', 'topics', 'subscriptions'));
     }
 
     /**
@@ -138,7 +148,7 @@ class ScheduledNotificationController extends Controller
     {
         $notification = ScheduledNotification::findOrFail($id);
         
-        return view('notify::scheduled.show', compact('notification'));
+        return view('push-notify::scheduled.show', compact('notification'));
     }
 
     /**
@@ -161,7 +171,7 @@ class ScheduledNotificationController extends Controller
         $topics = Topic::all();
         $subscriptions = Subscription::all();
         
-        return view('notify::scheduled.edit', compact('notification', 'messages', 'topics', 'subscriptions'));
+        return view('push-notify::scheduled.edit', compact('notification', 'messages', 'topics', 'subscriptions'));
     }
 
     /**
