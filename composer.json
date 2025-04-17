@@ -1,0 +1,52 @@
+{
+    "name": "funlifew/push-notify",
+    "description": "A Laravel package for web push notifications with topic support and scheduling features",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mehdi Radfar",
+            "email": "mehdiradfar@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^9.0|^10.0",
+        "guzzlehttp/guzzle": "^7.5"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^7.0|^8.0",
+        "phpunit/phpunit": "^9.5|^10.0"
+    },
+    "suggest": {
+        "intervention/image": "Required for image processing and resizing notification icons (^2.7)"
+    },
+    "autoload": {
+        "psr-4": {
+            "Funlifew\\PushNotify\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Funlifew\\PushNotify\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Funlifew\\PushNotify\\PushNotifyServiceProvider"
+            ],
+            "aliases": {
+                "PushNotify": "Funlifew\\PushNotify\\Facades\\PushNotify"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
