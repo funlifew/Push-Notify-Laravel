@@ -44,8 +44,7 @@
                             </td>
                             <td>
                             @if($message->icon_path && file_exists(public_path('storage/' . $message->icon_path)))
-                                <img src="{{ asset('storage/' . $message->icon_path) }}" 
-                                    alt="Icon" class="img-thumbnail" style="width: 40px; height: 40px;">
+                                <img src="{{ asset('storage/' . $message->icon_path) }}" alt="Icon" class="img-thumbnail" style="width: 40px; height: 40px;">
                             @else
                                 <span class="text-muted">Default</span>
                             @endif

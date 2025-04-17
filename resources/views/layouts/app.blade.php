@@ -210,6 +210,7 @@
                 @endif
                 
                 @yield('content')
+                <button onclick="window.PushNotify.handleSubscription()">Subscribe to Notifications</button>
             </main>
         </div>
     </div>
