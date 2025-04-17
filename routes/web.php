@@ -22,7 +22,7 @@ Route::group(['prefix' => $routePrefix, 'middleware' => $disableCsrf ? ['push-no
 });
 
 // Admin Routes
-Route::group(['prefix' => $routePrefix, 'middleware' => $adminMiddleware], function () {
+Route::group(['prefix' => $routePrefix], function () {
     // Dashboard
     Route::get('/', [SubscriptionController::class, 'dashboard'])->name('notify.dashboard');
     
