@@ -46,7 +46,7 @@ class NotificationService
         $this->adminToken = config('push-notify.push_token');
     }
 
-    /**
+        /**
      * Send a notification to a single subscription.
      *
      * @param  \Funlifew\PushNotify\Models\Subscription  $subscription
@@ -97,28 +97,50 @@ class NotificationService
             // Add icon if provided
             if ($iconPath && Storage::disk(config('push-notify.storage.disk'))->exists($iconPath)) {
                 $filePath = Storage::disk(config('push-notify.storage.disk'))->path($iconPath);
-                $multipartData[] = [
-                    'name' => 'icon',
-                    'contents' => fopen($filePath, 'r'),
-                    'filename' => basename($filePath),
-                    'headers' => ['Content-Type' => 'image/jpeg'],
-                ];
+                
+                // Make sure the file exists
+                if (file_exists($filePath)) {
+                    $multipartData[] = [
+                        'name' => 'icon',
+                        'contents' => fopen($filePath, 'r'),
+                        'filename' => basename($filePath),
+                        'headers' => ['Content-Type' => $this->getMimeType($filePath)],
+                    ];
+                } else {
+                    Log::warning("Icon file not found at path: {$filePath}");
+                }
             }
+
+            // Debug information
+            Log::debug('Sending push notification to: ' . $this->baseUrl . 'send/single/');
+            Log::debug('Admin Token: ' . (empty($this->adminToken) ? 'EMPTY!' : 'Set'));
+            Log::debug('Request data: ' . json_encode(array_map(function($item) {
+                return ['name' => $item['name'], 'contents' => $item['name'] === 'admin_token' ? '***' : (is_string($item['contents']) ? $item['contents'] : 'FILE')];
+            }, $multipartData)));
 
             $response = $this->client->request('POST', $this->baseUrl . 'send/single/', [
                 'multipart' => $multipartData,
+                'debug' => true,
+                'timeout' => 30,
+                'connect_timeout' => 30,
+                'http_errors' => false,
             ]);
 
+            $statusCode = $response->getStatusCode();
             $result = json_decode($response->getBody()->getContents(), true);
+            
+            Log::debug('Push notification response: ' . $statusCode . ' ' . json_encode($result));
 
             // Log the notification
-            $this->logNotification($subscription->id, null, $title, $body, $url, $iconPath, true);
+            $this->logNotification($subscription->id, null, $title, $body, $url, $iconPath, ($statusCode >= 200 && $statusCode < 300));
 
             return $result;
         } catch (Exception $e) {
             Log::error('Failed to send notification to subscription: ' . $e->getMessage(), [
                 'subscription_id' => $subscription->id,
                 'exception' => $e,
+                'base_url' => $this->baseUrl,
+                'admin_token_set' => !empty($this->adminToken),
             ]);
 
             // Log the failed notification
@@ -376,5 +398,44 @@ class NotificationService
             'status' => $success,
             'error' => $error,
         ]);
+    }
+
+       /**
+     * Get the MIME type of a file.
+     *
+     * @param string $path
+     * @return string
+     */
+    protected function getMimeType($path)
+    {
+        $mimeMap = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'svg' => 'image/svg+xml',
+            'webp' => 'image/webp',
+        ];
+        
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        
+        if (isset($mimeMap[$extension])) {
+            return $mimeMap[$extension];
+        }
+        
+        // Try to get mime type using PHP's functions
+        if (function_exists('mime_content_type')) {
+            return mime_content_type($path);
+        }
+        
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $path);
+            finfo_close($finfo);
+            return $mime;
+        }
+        
+        // Default to jpeg if we can't determine the type
+        return 'image/jpeg';
     }
 }
