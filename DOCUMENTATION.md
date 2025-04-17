@@ -2,7 +2,73 @@
 
 A comprehensive Laravel package for web push notifications with topic-based subscriptions, scheduling capabilities, and admin dashboard. Developed for internal use at our organization to integrate with our Django push notification server.
 
-![Push-Notify](https://via.placeholder.com/1200x400?text=Push+Notify+Laravel+Client)
+```tree
+📦 push-notify/
+┣ 📄 composer.json         # Package definition and dependencies
+┣ 📜 LICENSE.md            # MIT License
+┣ 📚 README.md             # Package documentation
+┃
+┣ 🗃️ database/             # Database migrations
+┃  └ 📁 migrations/
+┃     ┣ 📄 create_subscriptions_table.php
+┃     ┣ 📄 create_messages_table.php
+┃     ┣ 📄 create_topics_table.php
+┃     ┣ 📄 create_subscription_topic_table.php
+┃     ┣ 📄 create_notifications_table.php
+┃     └ 📄 create_scheduled_notifications_table.php
+┃
+┣ 🎨 resources/            # Frontend resources
+┃  ┣ 📁 js/
+┃  ┃  ┣ 📄 subscription.js  # Client-side subscription handling
+┃  ┃  └ 📄 sw.js           # Service worker for notifications
+┃  ┃
+┃  └ 📁 views/             # Admin dashboard views
+┃     ┣ 📄 layouts/app.blade.php
+┃     ┣ 📁 subscriptions/
+┃     ┣ 📁 topics/
+┃     ┣ 📁 messages/
+┃     └ 📁 scheduled/
+┃
+┣ 🛣️ routes/               # Route definitions
+┃  └ 📄 web.php            # Package routes
+┃
+┗ 🧩 src/                  # Core package code
+   ┣ 📁 Console/           # Artisan commands
+   ┃  └ 📁 Commands/
+   ┃     ┣ 📄 GenerateToken.php
+   ┃     ┣ 📄 InstallPush.php
+   ┃     └ 📄 SendScheduledNotifications.php
+   ┃
+   ┣ 📁 Facades/           # Package facades
+   ┃  └ 📄 PushNotify.php
+   ┃
+   ┣ 📁 Http/              # Controllers & Middlewares
+   ┃  ┣ 📁 Controllers/
+   ┃  ┃  ┣ 📄 MessageController.php
+   ┃  ┃  ┣ 📄 ScheduledNotificationController.php
+   ┃  ┃  ┣ 📄 SubscriptionController.php
+   ┃  ┃  └ 📄 TopicController.php
+   ┃  ┃
+   ┃  └ 📁 Middlewares/
+   ┃     ┣ 📄 AllowCorsMiddleware.php
+   ┃     └ 📄 DisableCsrfMiddleware.php
+   ┃
+   ┣ 📁 Models/            # Eloquent models
+   ┃  ┣ 📄 Message.php
+   ┃  ┣ 📄 Notification.php
+   ┃  ┣ 📄 ScheduledNotification.php
+   ┃  ┣ 📄 Subscription.php
+   ┃  └ 📄 Topic.php
+   ┃
+   ┣ 📁 Services/          # Business logic
+   ┃  └ 📄 NotificationService.php
+   ┃
+   ┣ 📁 config/            # Configuration
+   ┃  └ 📄 push-notify.php
+   ┃
+   ┣ 📄 helpers.php        # Helper functions
+   ┗ 📄 PushNotifyServiceProvider.php  # Service provider
+```
 
 ## Overview
 
