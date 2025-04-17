@@ -5,10 +5,15 @@ namespace Funlifew\PushNotify;
 use Funlifew\PushNotify\Console\Commands\GenerateToken;
 use Funlifew\PushNotify\Console\Commands\InstallPush;
 use Funlifew\PushNotify\Console\Commands\SendScheduledNotifications;
+use Funlifew\PushNotify\Services\NotificationService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ViewErrorBag;
+use Illuminate\Support\Facades\Session;
 
 class PushNotifyServiceProvider extends ServiceProvider
 {
@@ -35,6 +40,11 @@ class PushNotifyServiceProvider extends ServiceProvider
         if (file_exists($helperFile = __DIR__ . '/helpers.php')) {
             require_once $helperFile;
         }
+
+        // Register notification service
+        $this->app->singleton('push-notify', function ($app) {
+            return new NotificationService();
+        });
     }
 
     /**
@@ -46,7 +56,7 @@ class PushNotifyServiceProvider extends ServiceProvider
     {
         // Publish config
         $this->publishes([
-            __DIR__ . '/../config/push-notify.php' => config_path('push-notify.php'),
+            __DIR__ . '/config/push-notify.php' => config_path('push-notify.php'),
         ], 'push-notify-config');
 
         // Publish assets
@@ -74,6 +84,15 @@ class PushNotifyServiceProvider extends ServiceProvider
         
         // Configure Bootstrap pagination
         Paginator::useBootstrap();
+        
+        // CRITICAL FIX: Share errors variable with all views
+        // This ensures $errors is always available and prevents "undefined variable" errors
+        View::composer('*', function ($view) {
+            if (!isset($view->errors)) {
+                $errors = Session::get('errors', new ViewErrorBag);
+                $view->with('errors', $errors);
+            }
+        });
         
         // Register scheduled tasks
         $this->app->booted(function () {
