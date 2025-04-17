@@ -28,7 +28,7 @@ class PushNotifyServiceProvider extends ServiceProvider
 
         // Merge config
         $this->mergeConfigFrom(
-            __DIR__ . '/../config/push-notify.php', 'push-notify'
+            __DIR__ . '/config/push-notify.php', 'push-notify'
         );
 
         // Register helpers
