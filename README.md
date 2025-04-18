@@ -26,10 +26,26 @@ The package works with a companion Django Push Notification Server for handling 
 
 ## Installation
 
-### 1. Require the package via Composer:
+### 1. Add the repository to your project's composer.json:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/funlifew/push-notify.git"
+        }
+    ],
+    "require": {
+        "funlifew/push-notify": "dev-main"
+    }
+}
+```
+
+Then run:
 
 ```bash
-composer require funlifew/push-notify
+composer update
 ```
 
 ### 2. Publish assets and run migrations:
